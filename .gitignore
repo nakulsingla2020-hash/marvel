@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+
+# Local QA screenshots and contact sheets generated during visual checks
+preview-*.png
+qa-*.png
+review-*.png
+review-*.jpg
