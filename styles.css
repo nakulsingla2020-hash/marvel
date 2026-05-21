@@ -1205,7 +1205,7 @@ body[data-theme="finale"] .cursor-dot { background: var(--gold); }
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: url("assets/hero/avengers-endgame-reveal.jpg") center / cover no-repeat;
+  background: url("assets/mcu.jpg") center / cover no-repeat;
   opacity: 0;
   clip-path: circle(0 at var(--mx) var(--my));
   filter: saturate(1.15) contrast(1.06);
