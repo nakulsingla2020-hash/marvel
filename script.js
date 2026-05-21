@@ -8,16 +8,12 @@
   const cursor = document.getElementById("cursor");
   const cursorLabel = cursor?.querySelector(".cursor-label");
   const chapterCounter = document.getElementById("chapterCounter");
-  const navLinks = [...document.querySelectorAll(".hud-nav a[href^='#']")];
   const hud = document.querySelector(".hud");
   const hero = document.getElementById("hero");
   const soundToggle = document.getElementById("soundToggle");
   const preloader = document.querySelector(".preloader");
   const preloaderBar = document.querySelector(".preloader-bar i");
   const preloaderPct = document.querySelector("[data-pct]");
-  const railFill = document.getElementById("railFill");
-  const railMeta = document.getElementById("railMeta");
-  const railItems = [...document.querySelectorAll(".rail-list li")];
   const cosmos = document.getElementById("cosmos");
   const filmGrain = document.getElementById("filmGrain");
   const signalLine = document.getElementById("signalLine");
@@ -26,23 +22,41 @@
   const floatLayer = document.getElementById("floatLayer");
   const constellationLabel = document.getElementById("constellationLabel");
   const replayBtn = document.getElementById("replayBtn");
+  const beginRide = document.getElementById("beginRide");
+  const stoneLore = document.getElementById("stoneLore");
+  const gauntletFill = document.getElementById("gauntletFill");
+  const gauntletCount = document.getElementById("gauntletCount");
+  const constellationLore = document.getElementById("constellationLore");
+  const reelLightbox = document.getElementById("reelLightbox");
+  const lightboxVideo = document.getElementById("lightboxVideo");
+  const lightboxTitle = document.getElementById("lightboxTitle");
+  const lightboxClose = document.getElementById("lightboxClose");
+  const lightboxAudio = document.getElementById("lightboxAudio");
+  const doomsdayType = document.getElementById("doomsdayType");
+  const cursorHome = cursor
+    ? { parent: cursor.parentNode, next: cursor.nextSibling }
+    : null;
 
   const chapterLabels = {
     hero: "00 · Entry",
     vault: "01 · Vault",
     metrics: "02 · Intel",
-    reel: "03 · Reel",
-    artifacts: "04 · Artifacts",
-    signal: "05 · Signal",
-    portal: "06 · Portal",
-    constellation: "07 · Registry",
-    moments: "08 · Moments",
-    relics: "09 · Relics",
-    stones: "10 · Stones",
-    finale: "11 · Finale",
+    timeline: "03 · Timeline",
+    reel: "04 · Reel",
+    artifacts: "05 · Artifacts",
+    signal: "06 · Signal",
+    impact: "07 · Impact",
+    portal: "08 · Portal",
+    constellation: "09 · Registry",
+    moments: "10 · Moments",
+    breach: "11 · Breach",
+    relics: "12 · Relics",
+    stones: "13 · Stones",
+    finale: "14 · Finale",
+    doomsday: "15 · Future",
   };
 
-  let soundOn = false;
+  let soundOn = true;
   let pointer = { x: innerWidth / 2, y: innerHeight / 2 };
   let cursorPos = { ...pointer };
   let lastScrollY = scrollY;
@@ -54,7 +68,38 @@
   const clamp = (v, min = 0, max = 1) => Math.min(Math.max(v, min), max);
   const lerp = (a, b, t) => a + (b - a) * t;
 
-  /* ── Lenis smooth scroll ── */
+  function syncSoundToggle() {
+    if (!soundToggle) return;
+    soundToggle.textContent = soundOn ? "Sound On" : "Sound Off";
+    soundToggle.setAttribute("aria-pressed", String(soundOn));
+  }
+
+  function syncLightboxAudioToggle() {
+    if (!lightboxAudio || !lightboxVideo) return;
+    const enabled = !lightboxVideo.muted && lightboxVideo.volume > 0;
+    lightboxAudio.textContent = enabled ? "Audio On" : "Audio Off";
+    lightboxAudio.setAttribute("aria-pressed", String(enabled));
+  }
+
+  function moveCursorToLightbox() {
+    if (!cursor || !reelLightbox || !hasFinePointer || prefersReduced) return;
+    reelLightbox.appendChild(cursor);
+    document.body.classList.add("is-lightbox-open", "has-pointer");
+  }
+
+  function restoreCursorHome() {
+    if (!cursor || !cursorHome?.parent) return;
+    if (cursor.parentNode !== cursorHome.parent) {
+      cursorHome.parent.insertBefore(
+        cursor,
+        cursorHome.next?.parentNode === cursorHome.parent ? cursorHome.next : cursorHome.parent.firstChild
+      );
+    }
+    document.body.classList.remove("is-lightbox-open", "cursor-hover");
+    if (cursorLabel) cursorLabel.textContent = "";
+  }
+
+  /* ── Lenis smooth scroll (must sync with ScrollTrigger) ── */
   function initLenis() {
     if (prefersReduced || typeof Lenis === "undefined") return null;
     const instance = new Lenis({
@@ -65,15 +110,38 @@
     });
 
     instance.on("scroll", () => {
-      if (gsapReady) ScrollTrigger.update();
-      updateScrollUI();
+      updateScrollUI(instance.scroll);
     });
 
-    const raf = (time) => {
-      instance.raf(time);
+    if (gsapReady) {
+      ScrollTrigger.scrollerProxy(document.documentElement, {
+        scrollTop(value) {
+          if (arguments.length) {
+            instance.scrollTo(value, { immediate: true });
+          }
+          return instance.scroll;
+        },
+        getBoundingClientRect() {
+          return {
+            top: 0,
+            left: 0,
+            width: innerWidth,
+            height: innerHeight,
+          };
+        },
+      });
+
+      ScrollTrigger.addEventListener("refresh", () => instance.resize());
+      gsap.ticker.add((time) => instance.raf(time * 1000));
+      gsap.ticker.lagSmoothing(0);
+    } else {
+      const raf = (time) => {
+        instance.raf(time);
+        requestAnimationFrame(raf);
+      };
       requestAnimationFrame(raf);
-    };
-    requestAnimationFrame(raf);
+    }
+
     return instance;
   }
 
@@ -145,28 +213,69 @@
     video.removeAttribute("data-src");
   }
 
+  function playSceneVideo(video) {
+    if (video.dataset.forceMuted === "true") {
+      video.muted = true;
+      video.volume = 0;
+      video.play().catch(() => {});
+      return;
+    }
+    const wantsAudio = shouldSceneVideoPlayAudio(video);
+    video.muted = !wantsAudio;
+    const attempt = video.play();
+    if (!attempt?.catch) return;
+    attempt.catch(() => {
+      video.muted = true;
+      video.play().catch(() => {});
+    });
+  }
+
+  function shouldSceneVideoPlayAudio(video) {
+    return soundOn && video.dataset.audioScene === "true" && video.dataset.forceMuted !== "true";
+  }
+
+  function syncSceneAudioState() {
+    document.querySelectorAll("video").forEach((v) => {
+      if (v === lightboxVideo) v.muted = !soundOn;
+      else if (v.src) v.muted = !shouldSceneVideoPlayAudio(v);
+    });
+    syncSoundToggle();
+    syncLightboxAudioToggle();
+  }
+
   const videoObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         const video = entry.target;
         if (entry.isIntersecting) {
           hydrateVideo(video);
-          video.muted = !soundOn;
-          video.play().catch(() => {});
+          playSceneVideo(video);
         } else video.pause();
       });
     },
     { threshold: 0.32 }
   );
   videos.forEach((v) => videoObserver.observe(v));
+  syncSoundToggle();
+
+  ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {
+    window.addEventListener(
+      eventName,
+      () => {
+        syncSceneAudioState();
+        document.querySelectorAll("video[data-audio-scene='true']").forEach((video) => {
+          if (video.src && !video.paused) playSceneVideo(video);
+        });
+        toggleAmbient(soundOn);
+      },
+      { once: true, passive: true }
+    );
+  });
 
   soundToggle?.addEventListener("click", () => {
     soundOn = !soundOn;
-    soundToggle.textContent = soundOn ? "Sound On" : "Sound Off";
-    soundToggle.setAttribute("aria-pressed", String(soundOn));
-    document.querySelectorAll("video").forEach((v) => {
-      if (v.src) v.muted = !soundOn;
-    });
+    syncSceneAudioState();
+    toggleAmbient(soundOn);
   });
 
   replayBtn?.addEventListener("click", () => {
@@ -263,7 +372,7 @@
     if (!cursor || !hasFinePointer || prefersReduced) return;
 
     const hoverables = document.querySelectorAll(
-      "[data-magnetic], [data-tilt], [data-cursor], .reel-card, .artifact-piece, .relic-card, .constellation-node, .hud-nav a"
+      "[data-magnetic], [data-tilt], [data-cursor], .reel-card, .artifact-piece, .relic-card, .constellation-node, .stone-btn, .hero-cta, .lightbox-close, .lightbox-audio, .reel-lightbox video"
     );
 
     const onMove = (e) => {
@@ -322,6 +431,14 @@
       const scrollY = window.scrollY * 0.02 * depth;
       img.style.transform = `translate3d(${dx}px, ${dy - scrollY}px, 0)`;
     });
+
+    hero.querySelectorAll(".hero-poster").forEach((poster) => {
+      const depth = parseFloat(poster.dataset.depth || 1);
+      const dx = (x - innerWidth / 2) * depth * 0.012;
+      const dy = (y - innerHeight / 2) * depth * 0.012;
+      const scrollFactor = scrollY * 0.015 * depth;
+      poster.style.transform = `translate(calc(-50% + var(--px) + ${dx}px), calc(-50% + var(--py) + ${dy - scrollFactor}px)) rotate(var(--rot, 0deg))`;
+    });
   }
 
   function initVaultParallax() {
@@ -375,21 +492,222 @@
     });
   }
 
+  const heroLore = {
+    Steve: "Worthy of the shield — carries a standard, not a weapon.",
+    Tony: "Genius, billionaire, playboy, philanthropist — proof of a heart.",
+    Thor: "Not a god of hammers. A king who learns humility.",
+    Strange: "Fourteen million futures. One path left to win.",
+    "T'Challa": "Wakanda forever — courage without borders.",
+    Thanos: "Perfectly balanced. The villain who believes he's right.",
+  };
+
+  const stoneLoreText = {
+    space: "Space · Tesseract blue — bend distance itself.",
+    mind: "Mind · Scepter gold — rewrite thought and will.",
+    reality: "Reality · Aether crimson — laws of physics optional.",
+    power: "Power · Orb violet — raw destructive force.",
+    time: "Time · Eye of Agamotto green — rewrite the clock.",
+    soul: "Soul · Orange whisper — the price of sacrifice.",
+  };
+
   /* ── Constellation nodes ── */
   function initConstellation() {
     document.querySelectorAll(".constellation-node").forEach((node) => {
       node.addEventListener("click", () => {
         document.querySelectorAll(".constellation-node").forEach((n) => n.classList.remove("is-active"));
         node.classList.add("is-active");
+        const name = node.dataset.hero || "";
         if (constellationLabel) {
           constellationLabel.style.opacity = "0";
           window.setTimeout(() => {
-            constellationLabel.textContent = node.dataset.hero || "";
+            constellationLabel.textContent = name;
             constellationLabel.style.opacity = "1";
+          }, 150);
+        }
+        if (constellationLore) {
+          constellationLore.style.opacity = "0";
+          window.setTimeout(() => {
+            constellationLore.textContent = heroLore[name] || "";
+            constellationLore.style.opacity = "1";
           }, 150);
         }
       });
     });
+  }
+
+  /* ── Infinity stone collector ── */
+  function initStonesCollector() {
+    const stonesSection = document.getElementById("stones");
+    const buttons = [...document.querySelectorAll(".stone-btn")];
+    if (!buttons.length) return;
+
+    const collected = new Set();
+
+    const updateGauntlet = () => {
+      const n = collected.size;
+      if (gauntletFill) gauntletFill.style.width = `${(n / 6) * 100}%`;
+      if (gauntletCount) gauntletCount.textContent = `${n} / 6`;
+      if (stonesSection) stonesSection.classList.toggle("is-complete", n === 6);
+      if (n === 6 && stoneLore) {
+        stoneLore.textContent = "Gauntlet complete. The universe holds its breath.";
+        const finale = document.getElementById("finale");
+        if (finale && gsapReady && !prefersReduced) {
+          gsap.to(stonesSection, { boxShadow: "inset 0 0 120px rgba(201,169,98,0.15)", duration: 1.2 });
+        }
+      }
+    };
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.stone;
+        if (!id) return;
+        collected.add(id);
+        btn.classList.add("is-collected");
+        if (stoneLore) stoneLore.textContent = stoneLoreText[id] || "";
+        updateGauntlet();
+        if (gsapReady && !prefersReduced) {
+          gsap.fromTo(btn, { scale: 1.2 }, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.5)" });
+        }
+      });
+    });
+  }
+
+  /* ── Reel lightbox + spotlight ── */
+  function initReelLightbox() {
+    const cards = [...document.querySelectorAll(".reel-card[data-clip]")];
+    if (!cards.length || !reelLightbox) return;
+
+    const open = (card) => {
+      const src = card.dataset.clip;
+      const poster = card.dataset.poster;
+      const title = card.dataset.title;
+      if (!src || !lightboxVideo) return;
+      if (lightboxTitle) lightboxTitle.textContent = title || "";
+      lightboxVideo.src = src;
+      lightboxVideo.poster = poster || "";
+      lightboxVideo.muted = !soundOn;
+      syncLightboxAudioToggle();
+      moveCursorToLightbox();
+      reelLightbox.showModal();
+      lightboxVideo.play().catch(() => {});
+    };
+
+    const close = () => {
+      if (!lightboxVideo) return;
+      lightboxVideo.pause();
+      lightboxVideo.removeAttribute("src");
+      reelLightbox.close();
+    };
+
+    cards.forEach((card) => {
+      card.addEventListener("click", () => open(card));
+    });
+
+    lightboxAudio?.addEventListener("click", () => {
+      if (!lightboxVideo?.src) return;
+      lightboxVideo.muted = !lightboxVideo.muted;
+      soundOn = !lightboxVideo.muted;
+      syncSoundToggle();
+      syncLightboxAudioToggle();
+      toggleAmbient(soundOn);
+      lightboxVideo.play().catch(() => {});
+    });
+    lightboxClose?.addEventListener("click", close);
+    reelLightbox.addEventListener("click", (e) => {
+      if (e.target === reelLightbox) close();
+    });
+    reelLightbox.addEventListener("close", () => {
+      if (lightboxVideo) {
+        lightboxVideo.pause();
+        lightboxVideo.removeAttribute("src");
+        syncLightboxAudioToggle();
+      }
+      restoreCursorHome();
+    });
+  }
+
+  function initReelSpotlight() {
+    const cards = [...document.querySelectorAll(".reel-card")];
+    if (!cards.length) return;
+
+    const setSpotlight = (index) => {
+      cards.forEach((c, i) => c.classList.toggle("is-spotlight", i === index));
+    };
+
+    cards.forEach((card, i) => {
+      card.addEventListener("mouseenter", () => setSpotlight(i));
+      card.addEventListener("focus", () => setSpotlight(i));
+    });
+
+    document.querySelector(".reel-track")?.addEventListener("mouseleave", () => {
+      cards.forEach((c) => c.classList.remove("is-spotlight"));
+    });
+  }
+
+  function initSnapBrightnessCue() {
+    const snapSlide = document.querySelector('.finale-slide[data-theme="snap"]');
+    const snapVideo = snapSlide?.querySelector("video");
+    const finalePin = document.querySelector(".finale-pin");
+    if (!snapSlide || !snapVideo) return;
+
+    const start = Number(snapVideo.dataset.cueStart || 8.4);
+    const end = Number(snapVideo.dataset.cueEnd || 15.8);
+    const syncCue = () => {
+      const active = snapVideo.currentTime >= start && snapVideo.currentTime <= end;
+      snapSlide.classList.toggle("snap-cue", active);
+      finalePin?.classList.toggle("snap-cue", active);
+    };
+
+    snapVideo.addEventListener("timeupdate", syncCue);
+    snapVideo.addEventListener("seeked", syncCue);
+    snapVideo.addEventListener("play", syncCue);
+    snapVideo.addEventListener("pause", () => {
+      snapSlide.classList.remove("snap-cue");
+      finalePin?.classList.remove("snap-cue");
+    });
+  }
+
+  /* ── Begin ride CTA ── */
+  function initBeginRide() {
+    beginRide?.addEventListener("click", () => {
+      const vault = document.getElementById("vault");
+      if (!vault) return;
+      if (lenis) lenis.scrollTo(vault, { duration: 1.6 });
+      else vault.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth" });
+    });
+  }
+
+  /* ── Ambient sound (Web Audio) ── */
+  let ambientCtx = null;
+  let ambientNodes = null;
+
+  function toggleAmbient(on) {
+    if (prefersReduced) return;
+    try {
+      if (on) {
+        if (!ambientCtx) ambientCtx = new AudioContext();
+        if (ambientCtx.state === "suspended") ambientCtx.resume();
+        const osc = ambientCtx.createOscillator();
+        const gain = ambientCtx.createGain();
+        const filter = ambientCtx.createBiquadFilter();
+        osc.type = "sine";
+        osc.frequency.value = 55;
+        filter.type = "lowpass";
+        filter.frequency.value = 180;
+        gain.gain.value = 0.028;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ambientCtx.destination);
+        osc.start();
+        ambientNodes = { osc, gain };
+      } else if (ambientNodes) {
+        ambientNodes.gain.gain.exponentialRampToValueAtTime(0.001, ambientCtx.currentTime + 0.4);
+        ambientNodes.osc.stop(ambientCtx.currentTime + 0.45);
+        ambientNodes = null;
+      }
+    } catch {
+      /* Web Audio unavailable */
+    }
   }
 
   /* ── Metric counters ── */
@@ -432,22 +750,25 @@
     document.body.dataset.theme =
       document.querySelector(`#${id}`)?.dataset.theme || "void";
 
-    railItems.forEach((li) => li.classList.toggle("is-active", li.dataset.chapter === id));
-    if (railMeta) railMeta.textContent = chapterLabels[id] || id;
     if (chapterCounter) chapterCounter.textContent = chapterLabels[id]?.slice(0, 2) || "00";
-    navLinks.forEach((link) => link.classList.toggle("nav--active", link.getAttribute("href") === `#${id}`));
+    if (id === "stones") toggleAmbient(false);
+    else if (soundOn) toggleAmbient(true);
     if (id === "signal") startSignalTypewriter();
   }
 
-  function updateScrollUI() {
+  function getScrollY() {
+    return lenis?.scroll ?? scrollY;
+  }
+
+  function updateScrollUI(scrollOverride) {
+    const currentScroll = scrollOverride ?? getScrollY();
     const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-    const pct = clamp(scrollY / max);
-    if (railFill) railFill.style.height = `${pct * 100}%`;
+    const pct = clamp(currentScroll / max);
     if (scrollProgress) scrollProgress.style.height = `${pct * 100}%`;
 
-    const goingDown = scrollY > lastScrollY && scrollY > innerHeight * 0.55;
+    const goingDown = currentScroll > lastScrollY && currentScroll > innerHeight * 0.55;
     hud?.classList.toggle("is-hidden", goingDown);
-    lastScrollY = scrollY;
+    lastScrollY = currentScroll;
 
     let best = activeChapter;
     let bestScore = Infinity;
@@ -465,15 +786,6 @@
 
   window.addEventListener("scroll", updateScrollUI, { passive: true });
   window.addEventListener("resize", updateScrollUI);
-
-  railItems.forEach((li) => {
-    li.querySelector("button")?.addEventListener("click", () => {
-      const target = document.getElementById(li.dataset.chapter);
-      if (!target) return;
-      if (lenis) lenis.scrollTo(target, { offset: 0, duration: 1.4 });
-      else target.scrollIntoView({ behavior: prefersReduced ? "auto" : "smooth" });
-    });
-  });
 
   document.querySelectorAll(".hero-orbit span[data-target]").forEach((word) => {
     word.addEventListener("click", () => {
@@ -498,6 +810,325 @@
     window.setTimeout(type, 280);
   }
 
+  /* ── Static memory console ── */
+  function initMemoryConsole() {
+    const consoleEl = document.querySelector("[data-memory-console]");
+    if (!consoleEl) return;
+
+    const screen = consoleEl.querySelector("[data-memory-screen]");
+    const visual = consoleEl.querySelector("[data-memory-visual]");
+    const caseEl = consoleEl.querySelector("[data-memory-case]");
+    const statusEl = consoleEl.querySelector("[data-memory-status]");
+    const quoteEl = consoleEl.querySelector("[data-memory-quote]");
+    const sourceEl = consoleEl.querySelector("[data-memory-source]");
+    const captionEl = consoleEl.querySelector("[data-memory-caption]");
+    const traceEl = consoleEl.querySelector("[data-memory-trace]");
+    const levelEl = consoleEl.querySelector("[data-memory-level]");
+    const archiveEl = consoleEl.querySelector("[data-memory-id]");
+    const tabs = [...consoleEl.querySelectorAll("[data-memory]")];
+
+    const files = {
+      sacrifice: {
+        case: "CASE 001 / SACRIFICE",
+        quote: "“We don't trade lives.”",
+        caption: "The moment morality became heavier than victory.",
+        source: "VISION · INFINITY WAR",
+        trace: "Morality / Loss",
+        level: "94%",
+        id: "MD-001",
+        image: "assets/artifacts/vision-avengers-vjxy2blr2sv4m60j.jpg",
+      },
+      fate: {
+        case: "CASE 002 / FATE",
+        quote: "“Part of the journey is the end.”",
+        caption: "The warning that every heroic arc eventually sends a bill.",
+        source: "STEPHEN STRANGE · ENDGAME",
+        trace: "Fate / Debt",
+        level: "97%",
+        id: "MD-002",
+        image: "assets/posters/strange-spider.jpg",
+      },
+      love: {
+        case: "CASE 003 / LOVE",
+        quote: "“I love you 3000.”",
+        caption: "A line so small it carried the weight of an entire universe.",
+        source: "TONY STARK · ENDGAME",
+        trace: "Family / Legacy",
+        level: "100%",
+        id: "MD-003",
+        image: "assets/posters/tony-heart.jpg",
+      },
+      return: {
+        case: "CASE 004 / RETURN",
+        quote: "“On your left.”",
+        caption: "The sound of hope arriving through fire and light.",
+        source: "SAM WILSON · ENDGAME",
+        trace: "Hope / Arrival",
+        level: "99%",
+        id: "MD-004",
+        image: "assets/MV5BMWIyZDljYWMtZGZkNS00YWE0LTkxOWYtM2I1NzJhYmRjMDM3XkEyXkFqcGc@._V1_.jpg",
+      },
+    };
+
+    const setFile = (key) => {
+      const file = files[key];
+      if (!file || !screen) return;
+
+      tabs.forEach((tab) => {
+        const active = tab.dataset.memory === key;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", active ? "true" : "false");
+        const state = tab.querySelector("i");
+        if (state) state.textContent = active ? "Decoded" : "Locked";
+      });
+
+      const write = () => {
+        if (visual) visual.src = file.image;
+        if (caseEl) caseEl.textContent = file.case;
+        if (statusEl) statusEl.textContent = "DECODED";
+        if (quoteEl) quoteEl.textContent = file.quote;
+        if (sourceEl) sourceEl.textContent = file.source;
+        if (captionEl) captionEl.textContent = file.caption;
+        if (traceEl) traceEl.textContent = file.trace;
+        if (levelEl) levelEl.textContent = file.level;
+        if (archiveEl) archiveEl.textContent = file.id;
+      };
+
+      if (prefersReduced) {
+        write();
+        return;
+      }
+
+      screen.classList.remove("is-decoded");
+      screen.classList.add("is-switching");
+      window.setTimeout(() => {
+        write();
+        screen.classList.add("is-decoded");
+      }, 120);
+      window.setTimeout(() => screen.classList.remove("is-switching"), 560);
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => setFile(tab.dataset.memory));
+      if (hasFinePointer) tab.addEventListener("mouseenter", () => setFile(tab.dataset.memory));
+    });
+
+    screen?.classList.add("is-decoded");
+  }
+
+  /* ── Future coda ── */
+  function initFutureCoda() {
+    const coda = document.getElementById("doomsday");
+    const stage = coda?.querySelector(".coda-stage");
+    const scenes = [...document.querySelectorAll("[data-coda-scene]")];
+    if (!coda || !stage || !scenes.length) return;
+
+    let typed = false;
+    const typeFinal = () => {
+      if (typed || !doomsdayType) return;
+      typed = true;
+      const text = doomsdayType.dataset.text || "";
+      doomsdayType.textContent = "";
+      if (prefersReduced) {
+        doomsdayType.textContent = text;
+        return;
+      }
+      let i = 0;
+      const words = text.split(" ");
+      const tick = () => {
+        doomsdayType.textContent = words.slice(0, i).join(" ");
+        i += 1;
+        const previous = words[i - 2] || "";
+        if (i <= words.length) window.setTimeout(tick, /[.!?]$/.test(previous) ? 360 : 92);
+      };
+      tick();
+    };
+
+    const setScene = (index) => {
+      scenes.forEach((scene, i) => scene.classList.toggle("is-active", i === index));
+      if (index === 2) typeFinal();
+    };
+
+    setScene(0);
+
+    if (prefersReduced || !gsapReady) {
+      coda.classList.add("is-unpinned");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const scene = entry.target;
+            if (scene.classList.contains("coda-terminal")) typeFinal();
+          });
+        },
+        { threshold: 0.48 }
+      );
+      scenes.forEach((scene) => scene.classList.add("is-active"));
+      scenes.forEach((scene) => observer.observe(scene));
+      return;
+    }
+
+    coda.classList.add("is-scrubbing");
+    gsap.set(scenes, { autoAlpha: 0, zIndex: 1 });
+    gsap.set(scenes[0], { autoAlpha: 1, zIndex: 3 });
+    gsap.set(scenes[0].querySelector("img"), { scale: 1.08 });
+    gsap.set(scenes[1].querySelector("img"), { scale: 1.08 });
+
+    const codaTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: coda,
+        start: "top top",
+        end: () => `+=${innerHeight * 3.6}`,
+        pin: true,
+        scrub: 0.7,
+        anticipatePin: 1,
+      },
+    });
+
+    codaTl
+      .to(scenes[0].querySelector("img"), { scale: 1, duration: 1.1, ease: "none" })
+      .to({}, { duration: 0.4 })
+      .to(scenes[0], { autoAlpha: 0, duration: 0.65, ease: "power1.inOut" })
+      .call(() => setScene(1), [], "<")
+      .set(scenes[1], { zIndex: 4 }, "<")
+      .fromTo(
+        scenes[1],
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.65, ease: "power1.inOut" },
+        "<"
+      )
+      .to(scenes[1].querySelector("img"), { scale: 1, duration: 1.2, ease: "none" })
+      .to({}, { duration: 0.45 })
+      .to(scenes[1], { autoAlpha: 0, duration: 0.65, ease: "power1.inOut" })
+      .call(() => setScene(2), [], "<")
+      .set(scenes[2], { zIndex: 5 }, "<")
+      .fromTo(
+        scenes[2],
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.65, ease: "power1.inOut", onStart: typeFinal },
+        "<"
+      )
+      .to({}, { duration: 1.45 });
+  }
+
+  /* ── Breach before/after scrubber ── */
+  function initBreachScrubber() {
+    const compare = document.getElementById("breachCompare");
+    const scrubber = document.getElementById("breachScrubber");
+    if (!compare || !scrubber) return;
+
+    const setBreach = (pct) => {
+      const value = clamp(pct, 2, 98);
+      compare.style.setProperty("--breach", `${value}%`);
+      scrubber.value = String(Math.round(value));
+    };
+
+    setBreach(parseFloat(scrubber.value) || 50);
+
+    scrubber.addEventListener("input", () => setBreach(parseFloat(scrubber.value)));
+
+    let dragging = false;
+
+    const pointerScrub = (clientX) => {
+      const rect = compare.getBoundingClientRect();
+      const pct = ((clientX - rect.left) / rect.width) * 100;
+      setBreach(pct);
+    };
+
+    compare.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      compare.setPointerCapture(e.pointerId);
+      pointerScrub(e.clientX);
+    });
+
+    compare.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      pointerScrub(e.clientX);
+    });
+
+    compare.addEventListener("pointerup", () => {
+      dragging = false;
+    });
+
+    compare.addEventListener("pointercancel", () => {
+      dragging = false;
+    });
+
+    if (prefersReduced || !gsapReady) return;
+
+    gsap.fromTo(
+      compare,
+      { "--breach": "78%" },
+      {
+        "--breach": "22%",
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#breach",
+          start: "top 65%",
+          end: "bottom 35%",
+          scrub: 1.2,
+        },
+      }
+    );
+  }
+
+  /* ── Saga timeline (pinned 3-act) ── */
+  function initTimelinePin() {
+    const eras = [...document.querySelectorAll(".timeline-era")];
+    const ticks = [...document.querySelectorAll(".timeline-tick")];
+    const wrap = document.querySelector(".timeline-pin-wrap");
+    if (!eras.length || !wrap) return;
+
+    let activeIndex = 0;
+
+    const activateEra = (index) => {
+      const next = clamp(index, 0, eras.length - 1);
+      if (next === activeIndex && eras[next].classList.contains("is-active")) return;
+      activeIndex = next;
+      eras.forEach((era, i) => {
+        const on = i === next;
+        era.classList.toggle("is-active", on);
+        if (!on) gsap.set(era, { clearProps: "opacity,visibility,transform,autoAlpha" });
+      });
+      ticks.forEach((tick, i) => tick.classList.toggle("is-active", i === next));
+    };
+
+    ticks.forEach((tick, i) => {
+      tick.addEventListener("click", () => {
+        const st = ScrollTrigger.getById("timelinePin");
+        if (st) {
+          const progress = i / Math.max(1, eras.length - 1);
+          const y = st.start + (st.end - st.start) * progress;
+          if (lenis) lenis.scrollTo(y, { duration: 1.2 });
+          else window.scrollTo({ top: y, behavior: prefersReduced ? "auto" : "smooth" });
+        }
+        activateEra(i);
+      });
+    });
+
+    activateEra(0);
+
+    if (prefersReduced || !gsapReady) return;
+
+    ScrollTrigger.create({
+      id: "timelinePin",
+      trigger: wrap,
+      start: "top top",
+      end: () => `+=${innerHeight * Math.max(eras.length, 2)}`,
+      pin: wrap,
+      pinSpacing: true,
+      scrub: 0.85,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const index = Math.min(eras.length - 1, Math.floor(self.progress * eras.length));
+        activateEra(index);
+      },
+      onLeave: () => activateEra(eras.length - 1),
+      onLeaveBack: () => activateEra(0),
+    });
+  }
+
   /* ── Horizontal pin helper ── */
   function pinHorizontal(trackSel, wrapSel) {
     const track = document.querySelector(trackSel);
@@ -513,7 +1144,8 @@
         trigger: wrap,
         start: "top top",
         end: () => `+=${distance()}`,
-        pin: true,
+        pin: wrap,
+        pinSpacing: true,
         scrub: 1,
         invalidateOnRefresh: true,
         anticipatePin: 1,
@@ -556,6 +1188,15 @@
       delay: 0.8,
     });
 
+    gsap.from(".hero-boarding", {
+      opacity: 0,
+      y: 40,
+      rotate: 8,
+      duration: 1.2,
+      ease: "power3.out",
+      delay: 1.4,
+    });
+
     /* Vault arc reactor reveal */
     const vaultVideo = document.querySelector(".vault-video");
     const vaultStage = document.querySelector(".vault-stage");
@@ -564,7 +1205,7 @@
         scrollTrigger: {
           trigger: ".vault-pin-wrap",
           start: "top top",
-          end: "+=155%",
+          end: "+=185%",
           pin: true,
           scrub: 0.9,
         },
@@ -575,8 +1216,8 @@
           vaultVideo,
           {
             autoAlpha: 0,
-            y: "5vh",
-            scale: 1.08,
+            y: "0vh",
+            scale: 1,
             clipPath: "circle(1% at 50% 78%)",
           },
           {
@@ -585,9 +1226,9 @@
             scale: 1,
             clipPath: "circle(150% at 50% 78%)",
             ease: "power3.inOut",
-            duration: 0.82,
+            duration: 0.92,
           },
-          0
+          0.22
         )
         .fromTo(
           ".reactor-shell",
@@ -623,16 +1264,14 @@
           0.34
         );
 
-      gsap.from(".vault-copy", {
-        opacity: 0,
-        y: 60,
-        scrollTrigger: { trigger: ".vault", start: "top 60%", end: "top 30%", scrub: true },
-      });
     }
 
+    /* Timeline pin must register before reel/artifacts so ranges don't overlap */
+    initTimelinePin();
+
     mm.add("(min-width: 901px)", () => {
-      pinHorizontal(".reel-track", ".reel-pin");
-      pinHorizontal(".artifacts-track", ".artifacts-pin");
+      pinHorizontal(".reel-track", ".reel-pin-wrap");
+      pinHorizontal(".artifacts-track", ".artifacts-pin-wrap");
     });
 
     gsap.from(".metric-card", {
@@ -652,6 +1291,16 @@
       ease: "power3.out",
       scrollTrigger: { trigger: "#signal", start: "top 70%" },
     });
+
+    gsap.from(".breach-compare", {
+      opacity: 0,
+      scale: 0.92,
+      duration: 1.1,
+      ease: "power3.out",
+      scrollTrigger: { trigger: "#breach", start: "top 72%" },
+    });
+
+    initBreachScrubber();
 
     /* Portal breach */
     gsap.timeline({
@@ -714,7 +1363,7 @@
       scrollTrigger: { trigger: ".relics-grid", start: "top 78%" },
     });
 
-    gsap.from(".stones-inner > *:not(.stones-video)", {
+    gsap.from(".stones-copy > *, .stones-stage", {
       opacity: 0,
       y: 50,
       stagger: 0.1,
@@ -724,31 +1373,47 @@
     });
 
     if (!prefersReduced) {
-      gsap.to(".stone-ring", { rotate: 360, duration: 50, repeat: -1, ease: "none" });
+      gsap.to(".stone-orbit", { rotate: 360, duration: 80, repeat: -1, ease: "none" });
     }
 
     if (finaleSlides.length) {
+      gsap.set(finaleSlides, { autoAlpha: 0, zIndex: 0 });
+      gsap.set(finaleSlides[0], { autoAlpha: 1, zIndex: 1 });
       finaleSlides[0].classList.add("is-current");
       const finaleTl = gsap.timeline({
         scrollTrigger: {
           trigger: ".finale-pin-wrap",
           start: "top top",
-          end: () => `+=${innerHeight * (finaleSlides.length + 0.6)}`,
+          end: () => `+=${innerHeight * (finaleSlides.length + 1.15)}`,
           pin: true,
-          scrub: 0.85,
+          scrub: 0.72,
           anticipatePin: 1,
         },
       });
       finaleSlides.forEach((slide, i) => {
         if (i === 0) return;
+        const previous = finaleSlides[i - 1];
+        finaleTl.to({}, { duration: 0.95 });
         finaleTl.add(() => {
           finaleSlides.forEach((s, j) => s.classList.toggle("is-current", j === i));
         });
-        finaleTl.to({}, { duration: 1 });
+        finaleTl
+          .set(slide, { zIndex: i + 1 })
+          .to(previous, { autoAlpha: 0, duration: 0.48, ease: "power3.inOut" })
+          .fromTo(
+            slide,
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.48, ease: "power3.inOut" },
+            "<"
+          )
+          .to({}, { duration: 0.82 });
       });
     }
 
     initCounters();
+
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh(true);
 
     ScrollTrigger.addEventListener("refresh", updateScrollUI);
     ScrollTrigger.create({
@@ -784,6 +1449,14 @@
     initTilt();
     initConstellation();
     initVaultParallax();
+    initStonesCollector();
+    initReelLightbox();
+    initReelSpotlight();
+    initSnapBrightnessCue();
+    initMemoryConsole();
+    initFutureCoda();
+    initBeginRide();
+    if (prefersReduced) initBreachScrubber();
     setChapter("hero");
 
     if (prefersReduced) {
@@ -794,9 +1467,14 @@
       if (gsapReady) {
         lenis = initLenis();
         initGSAP();
-        ScrollTrigger.refresh();
+        ScrollTrigger.refresh(true);
+        window.setTimeout(() => ScrollTrigger.refresh(true), 400);
       }
     }
+
+    window.addEventListener("load", () => {
+      if (gsapReady) ScrollTrigger.refresh(true);
+    });
 
     updateScrollUI();
     updateHeroReveal();

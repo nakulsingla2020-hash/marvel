@@ -11,12 +11,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Syne:wght@600;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="preload" href="assets/generated/hero-atmosphere.png" as="image" />
     <link rel="preload" href="assets/posters/opening-marvel-logo.jpg" as="image" />
-    <link rel="preload" href="assets/mcu.jpg" as="image" />
-    <link rel="stylesheet" href="styles.css?v=905" />
+    <link rel="stylesheet" href="styles.css?v=921" />
   </head>
   <body>
     <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -53,46 +53,35 @@
       <span class="cursor-label"></span>
     </div>
 
-    <header class="hud" aria-label="Archive navigation">
+    <header class="hud" aria-label="Archive controls">
       <a class="hud-mark" href="#hero" data-magnetic data-cursor="Home">
         <span>Chapter</span>
         <b id="chapterCounter">00</b>
       </a>
-      <nav class="hud-nav" aria-label="Chapters">
-        <a href="#hero" data-magnetic>Entry</a>
-        <a href="#vault" data-magnetic>Vault</a>
-        <a href="#artifacts" data-magnetic>Artifacts</a>
-        <a href="#moments" data-magnetic>Moments</a>
-        <a href="#finale" data-magnetic>Finale</a>
-      </nav>
-      <button id="soundToggle" type="button" class="hud-sound" data-magnetic aria-pressed="false">
-        Sound Off
+      <button id="soundToggle" type="button" class="hud-sound" data-magnetic aria-pressed="true">
+        Sound On
       </button>
     </header>
-
-    <aside class="chapter-rail" aria-label="Scroll progress">
-      <div class="rail-track"><span class="rail-fill" id="railFill"></span></div>
-      <ol class="rail-list" id="railList">
-        <li data-chapter="hero"><button type="button">00</button></li>
-        <li data-chapter="vault"><button type="button">01</button></li>
-        <li data-chapter="metrics"><button type="button">02</button></li>
-        <li data-chapter="reel"><button type="button">03</button></li>
-        <li data-chapter="artifacts"><button type="button">04</button></li>
-        <li data-chapter="signal"><button type="button">05</button></li>
-        <li data-chapter="portal"><button type="button">06</button></li>
-        <li data-chapter="constellation"><button type="button">07</button></li>
-        <li data-chapter="moments"><button type="button">08</button></li>
-        <li data-chapter="relics"><button type="button">09</button></li>
-        <li data-chapter="stones"><button type="button">10</button></li>
-        <li data-chapter="finale"><button type="button">11</button></li>
-      </ol>
-      <span class="rail-meta" id="railMeta">00 · Entry</span>
-    </aside>
 
     <main id="main">
       <!-- HERO -->
       <section id="hero" class="panel hero" data-chapter="hero" data-theme="void">
+        <img class="hero-atmosphere" src="assets/generated/hero-atmosphere.png" alt="" aria-hidden="true" />
         <div class="hero-reveal" aria-hidden="true"></div>
+        <div class="hero-posters" aria-hidden="true">
+          <figure class="hero-poster" data-depth="0.9" style="--px: -22vw; --py: -8vh; --rot: -8deg">
+            <img src="assets/posters/iron-man-origin.jpg" alt="" />
+          </figure>
+          <figure class="hero-poster" data-depth="1.1" style="--px: 18vw; --py: -14vh; --rot: 6deg">
+            <img src="assets/posters/avengers-assemble-2012.jpg" alt="" />
+          </figure>
+          <figure class="hero-poster" data-depth="0.75" style="--px: -8vw; --py: 16vh; --rot: 4deg">
+            <img src="assets/posters/endgame-portals.jpg" alt="" />
+          </figure>
+          <figure class="hero-poster accent" data-depth="1.25" style="--px: 26vw; --py: 10vh; --rot: -5deg">
+            <img src="assets/posters/thanos-snap.jpg" alt="" />
+          </figure>
+        </div>
         <div class="hero-lens" aria-hidden="true"></div>
         <div class="hero-orbit" aria-hidden="true">
           <span data-depth="0.35" data-target="reel">SAGA</span>
@@ -115,8 +104,17 @@
             <span class="line" data-split>Marvel</span>
             <span class="line accent" data-split>Decoded</span>
           </h1>
-          <p class="hero-hint">Scroll to breach the seal</p>
+          <p class="hero-sub">A scroll-built ride for fans who remember every snap.</p>
+          <button type="button" class="hero-cta" id="beginRide" data-magnetic data-cursor="Begin">
+            Begin the ride
+          </button>
+          <p class="hero-hint">or scroll to breach the seal</p>
         </div>
+        <aside class="hero-boarding" aria-label="Fan clearance ticket">
+          <img src="assets/generated/fan-clearance-ticket.png" alt="Marvel Decoded clearance ticket" />
+          <span class="boarding-scan" aria-hidden="true"></span>
+          <span class="boarding-stamp">Cleared</span>
+        </aside>
         <div class="hero-scroll" aria-hidden="true"><span></span></div>
       </section>
 
@@ -135,12 +133,12 @@
             </div>
             <video
               class="vault-video"
-              muted
               loop
               playsinline
               preload="metadata"
               poster="assets/posters/opening-marvel-logo.jpg"
-              data-src="assets/clips/opening-marvel-logo.mp4"
+              data-src="assets/YTDown_YouTube_Marvel-Opening-Theme_Media_UhVjp48U2Oc_002_720p.mp4"
+              data-audio-scene="true"
             ></video>
             <div class="reactor-overlay" aria-hidden="true">
               <span class="reactor-core-ring"></span>
@@ -160,6 +158,7 @@
         <div class="metrics-inner">
           <p class="kicker">Archive intelligence</p>
           <h2 class="metrics-title">we're damn<br />good at</h2>
+          <p class="metrics-ride">Ride manifest · 15 chapters · one emotional arc</p>
           <div class="metrics-grid">
             <article class="metric-card" data-tilt>
               <span class="metric-value" data-count="30">0</span>
@@ -186,6 +185,88 @@
         </div>
       </section>
 
+      <!-- SAGA TIMELINE (pinned 3-act scroll) -->
+      <section id="timeline" class="panel timeline-pin" data-chapter="timeline" data-theme="timeline">
+        <div class="timeline-pin-wrap">
+          <header class="timeline-head">
+            <p class="kicker">Saga chronology</p>
+            <h2>Three acts.<br /><span class="stroke">One universe.</span></h2>
+            <div class="timeline-ruler" aria-hidden="true">
+              <span class="timeline-tick is-active" data-era="I">I</span>
+              <span class="timeline-line"></span>
+              <span class="timeline-tick" data-era="II">II</span>
+              <span class="timeline-line"></span>
+              <span class="timeline-tick" data-era="III">III</span>
+            </div>
+          </header>
+          <div class="timeline-stage">
+            <article class="timeline-era is-active" data-era="I">
+              <div class="era-visual">
+                <img
+                  class="era-image-truth"
+                  src="assets/generated/iron-man-truth-is-crop.jpg"
+                  alt=""
+                  loading="lazy"
+                />
+                <span class="era-glow cosmic"></span>
+              </div>
+              <div class="era-copy">
+                <span class="era-num">Act I · 2008–2012</span>
+                <h3>Origins<br />assemble</h3>
+                <p>Iron Man sparks belief. Cap carries a standard. Six names become one word — and the MCU stops being a gamble.</p>
+                <ul class="era-beats">
+                  <li>Iron Man</li>
+                  <li>Captain America</li>
+                  <li>The Avengers</li>
+                </ul>
+              </div>
+            </article>
+            <article class="timeline-era" data-era="II">
+              <div class="era-visual">
+                <img
+                  class="era-image-thanos"
+                  src="assets/Thanos-with-Infinity-Gauntlet-in-Avengers-Infinity-War.avif"
+                  alt=""
+                  loading="lazy"
+                />
+                <span class="era-glow violet"></span>
+              </div>
+              <div class="era-copy">
+                <span class="era-num">Act II · 2015–2018</span>
+                <h3>Fracture<br />then fall</h3>
+                <p>Victory sends a bill. Allies split. Infinity arrives — and half the universe dissolves into silence.</p>
+                <ul class="era-beats">
+                  <li>Civil War</li>
+                  <li>Infinity War</li>
+                  <li>The Snap</li>
+                </ul>
+              </div>
+            </article>
+            <article class="timeline-era" data-era="III">
+              <div class="era-visual">
+                <img
+                  class="era-image-return"
+                  src="assets/MV5BMWIyZDljYWMtZGZkNS00YWE0LTkxOWYtM2I1NzJhYmRjMDM3XkEyXkFqcGc@._V1_.jpg"
+                  alt=""
+                  loading="lazy"
+                />
+                <span class="era-glow gold"></span>
+              </div>
+              <div class="era-copy">
+                <span class="era-num">Act III · 2019–2023</span>
+                <h3>Return<br />resolve</h3>
+                <p>Portals open. Every story walks through one door. One final choice ends it — proof of a heart.</p>
+                <ul class="era-beats">
+                  <li>Endgame</li>
+                  <li>Portals</li>
+                  <li>I am Iron Man</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <!-- REEL -->
       <section id="reel" class="panel reel-pin" data-chapter="reel" data-theme="archive">
         <div class="reel-pin-wrap">
@@ -194,36 +275,44 @@
             <h2>Fragments<br />not scenes</h2>
           </header>
           <div class="reel-track">
-            <article class="reel-card" data-tilt data-index="01" data-cursor="Origin">
+            <article class="reel-card" tabindex="0" data-tilt data-index="01" data-cursor="Play" data-clip="assets/YTDown_YouTube_Iron-Man-Truth-is-I-am-Iron-Man_Media_dD12aw5KYug_002_720p.mp4" data-poster="assets/posters/iron-man-origin.jpg" data-title="Origin · 2008">
               <img src="assets/posters/iron-man-origin.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Origin</b><span>2008</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="02" data-cursor="Shield">
+            <article class="reel-card" data-tilt data-index="02" data-cursor="Play" data-clip="assets/YTDown_YouTube_Steve-Rogers-Gets-Vibranium-Shield-Capta_Media_q23jpbSu3dQ_002_720p.mp4" data-poster="assets/posters/cap-shield.jpg" data-title="Shield · 1940s">
               <img src="assets/posters/cap-shield.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Shield</b><span>1940s</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="03" data-cursor="Assemble">
+            <article class="reel-card" data-tilt data-index="03" data-cursor="Play" data-clip="assets/YTDown_YouTube_Avengers-Assemble-Scene-The-Avengers-201_Media_oBqqI6NMeaM_002_720p.mp4" data-poster="assets/posters/avengers-assemble-2012.jpg" data-title="Assemble · 2012">
               <img src="assets/posters/avengers-assemble-2012.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Assemble</b><span>2012</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="04" data-cursor="Thunder">
+            <article class="reel-card" data-tilt data-index="04" data-cursor="Play" data-clip="assets/YTDown_YouTube_Stormbreaker-All-Lightning-Thunder-Power_Media_xL4oeBCn9fk_002_720p.mp4" data-poster="assets/posters/stormbreaker.jpg" data-title="Thunder · 2018">
               <img src="assets/posters/stormbreaker.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Thunder</b><span>2018</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="05" data-cursor="Stones">
+            <article class="reel-card" data-tilt data-index="05" data-cursor="Play" data-clip="assets/YTDown_YouTube_All-Infinity-Gauntlet-Powers-Effects-and_Media_oOiiqlfj60_002_720p.mp4" data-poster="assets/posters/infinity-stones.jpg" data-title="Stones">
               <img src="assets/posters/infinity-stones.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Stones</b><span>—</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="06" data-cursor="Fall">
+            <article class="reel-card" data-tilt data-index="06" data-cursor="Play" data-clip="assets/YTDown_YouTube_Thanos-Snaps-Everyone-in-Infinity-war-Da_Media_cYL1MA1uUqg_002_720p.mp4" data-poster="assets/posters/thanos-snap.jpg" data-title="Fall · 2018">
               <img src="assets/posters/thanos-snap.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Fall</b><span>2018</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="07" data-cursor="Return">
+            <article class="reel-card" data-tilt data-index="07" data-cursor="Play" data-clip="assets/YTDown_YouTube_Avengers-Assemble-Portals-Scene-Avengers_Media_oLddEUg6opA_002_720p.mp4" data-poster="assets/posters/endgame-portals.jpg" data-title="Return · 2023">
               <img src="assets/posters/endgame-portals.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Return</b><span>2023</span></footer>
             </article>
-            <article class="reel-card" data-tilt data-index="08" data-cursor="Proof">
-              <img src="assets/posters/tony-heart.jpg" alt="" loading="lazy" />
+            <article class="reel-card" data-tilt data-index="08" data-cursor="Play" data-clip="assets/YTDown_YouTube_Tony-Stark-Funeral-Scene-Proof-That-Tony_Media_CLc3h0XAePQ_001_720p.mp4" data-poster="assets/posters/tony-river-flowers.jpg" data-title="Proof · Legacy">
+              <img src="assets/posters/tony-river-flowers.jpg" alt="" loading="lazy" />
+              <span class="reel-play" aria-hidden="true">▶</span>
               <footer><b>Proof</b><span>—</span></footer>
             </article>
           </div>
@@ -268,6 +357,34 @@
               <img src="assets/graphics/Inter-Dimensional_Portal_Infobox.webp" alt="" />
               <span>Portal</span>
             </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Wanda">
+              <img src="assets/artifacts/eye4_800x.webp" alt="" loading="lazy" />
+              <span>Wanda</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Wakanda">
+              <img src="assets/artifacts/black panther.avif" alt="" loading="lazy" />
+              <span>Panther</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Avengers">
+              <img src="assets/artifacts/Avengers_41.webp" alt="" loading="lazy" />
+              <span>Avengers</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Tesseract">
+              <img src="assets/artifacts/loki-shows-the-tesseract-in-avengers-endgame.avif" alt="" loading="lazy" />
+              <span>Tesseract</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Pym">
+              <img src="assets/artifacts/Avengers-endgame-pym-particles-plot-hole-scott-lang.avif" alt="" loading="lazy" />
+              <span>Pym</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Legacy">
+              <img src="assets/artifacts/4c6dc9ad1d9175ce66da9cd8b1e720c4.jpg" alt="" loading="lazy" />
+              <span>Legacy</span>
+            </article>
+            <article class="artifact-piece relic-scene" data-tilt data-cursor="Vision">
+              <img src="assets/artifacts/vision-avengers-vjxy2blr2sv4m60j.jpg" alt="" loading="lazy" />
+              <span>Vision</span>
+            </article>
           </div>
         </div>
       </section>
@@ -286,10 +403,90 @@
         </div>
       </section>
 
+      <!-- IMPACT / WHY -->
+      <section id="impact" class="panel impact" data-chapter="impact" data-theme="impact">
+        <div class="impact-inner">
+          <div class="impact-copy">
+            <p class="kicker">Emotional Archive Terminal</p>
+            <h2>Not a wiki.<br />A <em>feeling</em> engine.</h2>
+            <p class="impact-thesis">
+              Marvel is not remembered because of timelines. It is remembered because a shield returned, a portal opened, a kid vanished in his mentor's arms, and one line broke everyone.
+            </p>
+            <dl class="impact-readout" aria-label="Archive status">
+              <div>
+                <dt>Mode</dt>
+                <dd>Memory Console</dd>
+              </div>
+              <div>
+                <dt>Trace</dt>
+                <dd>Emotional Impact</dd>
+              </div>
+              <div>
+                <dt>Access</dt>
+                <dd>Level 3000</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="memory-console" data-memory-console>
+            <div class="memory-screen" data-memory-screen>
+              <img
+                class="memory-visual"
+                data-memory-visual
+                src="assets/artifacts/vision-avengers-vjxy2blr2sv4m60j.jpg"
+                alt=""
+                loading="lazy"
+              />
+              <div class="memory-overlay" aria-hidden="true"></div>
+              <div class="memory-content">
+                <div class="memory-topline">
+                  <span data-memory-case>CASE 001 / SACRIFICE</span>
+                  <span class="memory-status" data-memory-status>DECODED</span>
+                </div>
+                <blockquote>
+                  <p data-memory-quote>“We don't trade lives.”</p>
+                  <figcaption data-memory-source>VISION · INFINITY WAR</figcaption>
+                </blockquote>
+                <p class="memory-caption" data-memory-caption>The moment morality became heavier than victory.</p>
+                <div class="memory-meta">
+                  <span><b>Emotional trace</b><i data-memory-trace>Morality / Loss</i></span>
+                  <span><b>Impact level</b><i data-memory-level>94%</i></span>
+                  <span><b>Archive ID</b><i data-memory-id>MD-001</i></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="memory-tabs" role="tablist" aria-label="Memory files">
+              <button class="memory-tab is-active" type="button" role="tab" aria-selected="true" data-memory="sacrifice">
+                <span>CASE 001</span>
+                <b>Sacrifice</b>
+                <i>Decoded</i>
+              </button>
+              <button class="memory-tab" type="button" role="tab" aria-selected="false" data-memory="fate">
+                <span>CASE 002</span>
+                <b>Fate</b>
+                <i>Locked</i>
+              </button>
+              <button class="memory-tab" type="button" role="tab" aria-selected="false" data-memory="love">
+                <span>CASE 003</span>
+                <b>Love</b>
+                <i>Locked</i>
+              </button>
+              <button class="memory-tab" type="button" role="tab" aria-selected="false" data-memory="return">
+                <span>CASE 004</span>
+                <b>Return</b>
+                <i>Locked</i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- PORTAL TRANSITION -->
       <section id="portal" class="panel portal-pin" data-chapter="portal" data-theme="portal">
         <div class="portal-pin-wrap">
           <div class="portal-breach">
+            <img src="assets/generated/portal-energy.png" alt="" class="portal-energy" aria-hidden="true" />
             <img src="assets/graphics/avengers-coming-through-portals-in-avengers-endgame.avif" alt="" class="portal-giant" />
             <div class="portal-burst"></div>
           </div>
@@ -304,6 +501,7 @@
             <p class="kicker">Hero registry</p>
             <h2>Orbit of<br />choices</h2>
             <p class="constellation-active" id="constellationLabel">Steve</p>
+            <p class="constellation-lore" id="constellationLore">Worthy of the shield — carries a standard, not a weapon.</p>
           </header>
           <div class="constellation-stage">
             <span class="constellation-core"></span>
@@ -378,6 +576,39 @@
         </article>
       </section>
 
+      <!-- BREACH: before/after snap -->
+      <section id="breach" class="panel breach" data-chapter="breach" data-theme="breach">
+        <div class="breach-inner">
+          <header class="breach-head">
+            <p class="kicker">Reality breach</p>
+            <h2>Before the<br /><span class="stroke">silence</span></h2>
+            <p class="breach-hint">Drag the seam · or scroll</p>
+          </header>
+          <div class="breach-compare" id="breachCompare" data-cursor="Reveal">
+            <figure class="breach-layer breach-before">
+              <img src="assets/posters/endgame-portals.jpg" alt="Avengers return through portals" />
+              <figcaption>Return</figcaption>
+            </figure>
+            <figure class="breach-layer breach-after">
+              <img src="assets/posters/thanos-snap.jpg" alt="The snap" />
+              <figcaption>Silence</figcaption>
+            </figure>
+            <div class="breach-divider" id="breachDivider" aria-hidden="true">
+              <span class="breach-handle"></span>
+            </div>
+            <input
+              type="range"
+              class="breach-scrubber"
+              id="breachScrubber"
+              min="0"
+              max="100"
+              value="50"
+              aria-label="Compare before and after the snap"
+            />
+          </div>
+        </div>
+      </section>
+
       <!-- RELICS GRID -->
       <section id="relics" class="panel relics" data-chapter="relics" data-theme="relics">
         <div class="relics-inner">
@@ -403,17 +634,39 @@
       <!-- STONES -->
       <section id="stones" class="panel stones" data-chapter="stones" data-theme="stones">
         <div class="stones-inner">
-          <p class="kicker">Six shortcuts</p>
-          <h2>Collectible<br />universe</h2>
-          <div class="stone-ring" aria-hidden="true">
-            <i style="--i: 0" data-stone="space"></i>
-            <i style="--i: 1" data-stone="mind"></i>
-            <i style="--i: 2" data-stone="reality"></i>
-            <i style="--i: 3" data-stone="power"></i>
-            <i style="--i: 4" data-stone="time"></i>
-            <i style="--i: 5" data-stone="soul"></i>
+          <div class="stones-copy">
+            <p class="kicker">Six shortcuts</p>
+            <h2>Collect the<br />infinity stones</h2>
+            <p class="stone-lore" id="stoneLore">Tap each stone. Fill the gauntlet. Unlock the finale.</p>
+            <div class="gauntlet-meter" aria-label="Stones collected">
+              <span class="gauntlet-fill" id="gauntletFill"></span>
+              <span class="gauntlet-count" id="gauntletCount">0 / 6</span>
+            </div>
           </div>
-          <video class="stones-video" muted loop playsinline preload="metadata" poster="assets/posters/infinity-stones.jpg" data-src="assets/clips/infinity-stones.mp4"></video>
+          <div class="stones-stage">
+            <img class="stones-art" src="assets/generated/stones-collectible.png" alt="" aria-hidden="true" />
+            <div class="stone-orbit" id="stoneOrbit">
+              <button type="button" class="stone-btn" data-stone="space" style="--i: 0" data-cursor="Space">
+                <img src="assets/artifacts/stone-space.jpg" alt="Space stone" />
+              </button>
+              <button type="button" class="stone-btn" data-stone="mind" style="--i: 1" data-cursor="Mind">
+                <img src="assets/artifacts/stone-mind.jpg" alt="Mind stone" />
+              </button>
+              <button type="button" class="stone-btn" data-stone="reality" style="--i: 2" data-cursor="Reality">
+                <img src="assets/artifacts/stone-reality.jpg" alt="Reality stone" />
+              </button>
+              <button type="button" class="stone-btn" data-stone="power" style="--i: 3" data-cursor="Power">
+                <img src="assets/artifacts/stone-power.jpg" alt="Power stone" />
+              </button>
+              <button type="button" class="stone-btn" data-stone="time" style="--i: 4" data-cursor="Time">
+                <img src="assets/artifacts/stone-time.jpg" alt="Time stone" />
+              </button>
+              <button type="button" class="stone-btn" data-stone="soul" style="--i: 5" data-cursor="Soul">
+                <img src="assets/artifacts/stone-soul.jpg" alt="Soul stone" />
+              </button>
+            </div>
+          </div>
+          <video class="stones-video" muted loop playsinline preload="metadata" poster="assets/posters/infinity-stones.jpg" data-src="assets/clips/infinity-stones.mp4" data-force-muted="true"></video>
         </div>
       </section>
 
@@ -427,7 +680,16 @@
               <h3>Every story<br />through one door</h3>
             </article>
             <article class="finale-slide" data-theme="snap">
-              <video muted loop playsinline preload="metadata" poster="assets/posters/iron-man-snap.jpg" data-src="assets/clips/iron-man-snap.mp4"></video>
+              <video
+                loop
+                playsinline
+                preload="metadata"
+                poster="assets/posters/iron-man-snap.jpg"
+                data-src="assets/YTDown_YouTube_Iron-Man-Snap-Scene-Avengers-Endgame-IMA_Media_HGUOMinRjEo_002_720p.mp4"
+                data-audio-scene="true"
+                data-cue-start="8.4"
+                data-cue-end="15.8"
+              ></video>
               <div class="finale-veil heavy"></div>
               <h3>I am<br />Iron Man</h3>
             </article>
@@ -437,11 +699,51 @@
               <h3><span>Proof of a</span><br />Heart</h3>
             </article>
           </div>
+          <div class="finale-badge" aria-hidden="true">
+            <span>Hackathon-ready</span>
+            <b>Fan experience</b>
+          </div>
           <footer class="site-foot">
             <span>Fan tribute · Not affiliated with Marvel</span>
-            <button type="button" class="foot-replay replay-btn" id="replayBtn" data-magnetic>↺ Replay archive</button>
+            <button type="button" class="foot-replay replay-btn" id="replayBtn" data-magnetic>↺ Ride again</button>
             <span>Sealed · 2026</span>
           </footer>
+        </div>
+      </section>
+
+      <!-- FUTURE CODA -->
+      <section id="doomsday" class="panel future-coda" data-chapter="doomsday" data-theme="doomsday">
+        <div class="coda-stage">
+          <article class="coda-scene coda-image is-active" data-coda-scene="0">
+            <img src="assets/artifacts/maxresdefault.jpg" alt="" loading="lazy" />
+            <div class="coda-shade"></div>
+            <div class="coda-copy">
+              <p class="kicker">Transmission recovered</p>
+              <h2>The silence<br />doesn't last.</h2>
+              <p>After every ending, the universe starts listening for the next alarm.</p>
+            </div>
+          </article>
+          <article class="coda-scene coda-image coda-image-wide" data-coda-scene="1">
+            <img src="assets/artifacts/avengersdoomsday_lob_mas_mob_02.jpg" alt="" loading="lazy" />
+            <div class="coda-shade"></div>
+            <div class="coda-copy align-right">
+              <p class="kicker">Avengers: Doomsday</p>
+              <h2>The next<br />assembled shadow.</h2>
+              <p>Marvel's next Avengers event arrives December 18, 2026. The old armor is gone. The name still echoes.</p>
+            </div>
+          </article>
+          <article class="coda-scene coda-terminal" data-coda-scene="2">
+            <div class="coda-static" aria-hidden="true"></div>
+            <div class="terminal-shell">
+              <div class="terminal-bar" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <b>future_archive.exe</b>
+              </div>
+              <p class="terminal-label">FINAL TRANSMISSION</p>
+              <h2 id="doomsdayType" data-text="A new era. A new journey. The archive closes here, but the signal keeps calling. Thank you for riding through the memories. Made with love — Nakul Singla."></h2>
+              <p class="terminal-meta">MARVEL DECODED · FAN ARCHIVE · 2026</p>
+            </div>
+          </article>
         </div>
       </section>
     </main>
@@ -449,6 +751,13 @@
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
-    <script src="script.js?v=905"></script>
+    <dialog class="reel-lightbox" id="reelLightbox" aria-label="Evidence playback">
+      <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
+      <button type="button" class="lightbox-audio" id="lightboxAudio" aria-pressed="false">Audio Off</button>
+      <p class="lightbox-title" id="lightboxTitle"></p>
+      <video id="lightboxVideo" controls playsinline poster="" data-cursor="Clip"></video>
+    </dialog>
+
+    <script src="script.js?v=916"></script>
   </body>
 </html>
